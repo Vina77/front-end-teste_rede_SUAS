@@ -1,40 +1,24 @@
 import React from 'react';
-
-const Header = () => (
-  <header className="br-header mb-4" id="header" data-sticky="data-sticky">
-    <div className="container-lg">
-      <div className="header-top">
-        <div className="header-logo">
-          <img src="logo.png" alt="Logo"/>
-          <span className="br-divider vertical"></span>
-          <div className="header-sign">Assinatura</div>
-        </div>
-      </div>
-    </div>
-  </header>
-);
-
-const Main = () => (
-  <main className="d-flex flex-fill mb-5" id="main">
-    <div className="container-lg d-flex">
-      <h1>Bem-vindo ao Template React!</h1>
-    </div>
-  </main>
-);
-
-const Footer = () => (
-  <footer>
-    <p>Rodapé do site</p>
-  </footer>
-);
+import { Routes, Route, Navigate } from 'react-router-dom';
+import PaginaAcesso from './pages/acesso';
+import PaginaPrincipal from './pages/principal';
+import PaginaRegistro from './pages/registro';
 
 const App = () => {
   return (
-    <div>
-      <Header />
-      <Main />
-      <Footer />
-    </div>
+    <Routes>
+      {/* Redireciona a rota raiz para /acesso */}
+      <Route path="/" element={<Navigate to="/principal" />} />
+      
+      {/* Define a rota /acesso */}
+      <Route path="/acesso" element={<PaginaAcesso />} />
+      
+      {/* Define a rota /registro */}
+      <Route path="/registro" element={<PaginaRegistro />} />
+      
+      {/* Define a rota /principal */}
+      <Route path="/principal" element={<PaginaPrincipal />} />
+    </Routes>
   );
 };
 
