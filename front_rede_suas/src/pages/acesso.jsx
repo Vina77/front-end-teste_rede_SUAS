@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const PaginaAcesso = () => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Configuração base do Axios
   useEffect(() => {
+    axios.defaults.baseURL = 'http://localhost:8000/api';
     localStorage.removeItem('usuarioLogado');
-    
     document.body.style.overflow = 'hidden';
 
     return () => {
@@ -17,27 +20,42 @@ const PaginaAcesso = () => {
     };
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (email === '' && senha === '') {
-      alert('Os campos de E-mail e Senha estão vazios');
-      return;
-    }
-    
-    if (email === '') {
-      alert('O campo E-mail está vazio');
-      return;
-    }
-    
-    if (senha === '') {
-      alert('O campo Senha está vazio');
+    // Validações básicas
+    if (email === '' || senha === '') {
+      alert('Preencha todos os campos');
       return;
     }
 
-    localStorage.setItem('usuarioLogado', 'true');
+    setLoading(true);
 
-    navigate('/principal');
+    try {
+      const response = await axios.post('/acessar', {
+        email: email,
+        senha: senha
+      });
+
+      localStorage.setItem('usuarioLogado', 'true');
+      localStorage.setItem('userEmail', email);
+      
+      // Mensagem de sucesso
+      alert(response.data.message);
+      
+      // Navegar para página principal
+      navigate('/principal');
+
+    } catch (error) {
+      // Tratamento de erro
+      if (error.response) {
+        alert(error.response.data.error || 'Erro no login');
+      } else {
+        alert('Erro ao processar o login');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleMostrarSenha = () => {
@@ -112,8 +130,16 @@ const PaginaAcesso = () => {
                       </button>
                     </div>
                   </div>
-                  <button type="submit" className="br-button primary">Acessar</button>
-                  <div className="mt-3 text-center"><p>Não tem uma conta? <a href="/registro">Registre-se aqui</a></p></div>
+                  <button 
+                    type="submit" 
+                    className="br-button primary" 
+                    disabled={loading}
+                  >
+                    {loading ? 'Carregando...' : 'Acessar'}
+                  </button>
+                  <div className="mt-3 text-center">
+                    <p>Não tem uma conta? <a href="/registro">Registre-se aqui</a></p>
+                  </div>
                 </form>
               </div>
             </div>

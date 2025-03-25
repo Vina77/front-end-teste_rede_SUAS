@@ -7,7 +7,7 @@ import PaginaRegistro from './pages/registro';
 const App = () => {
   return (
     <Routes>
-      {/* Redireciona a rota raiz para /acesso */}
+      {/* Define a rota raiz */}
       <Route path="/" element={<Navigate to="/principal" />} />
       
       {/* Define a rota /acesso */}

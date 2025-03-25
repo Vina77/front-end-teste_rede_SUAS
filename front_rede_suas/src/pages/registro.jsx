@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const PaginaRegistro = () => {
   const [email, setEmail] = useState('');
   const [dataNascimento, setDataNascimento] = useState('');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Configuração base do Axios
   useEffect(() => {
+    axios.defaults.baseURL = 'http://localhost:8000/api';
     document.body.style.overflow = 'hidden';
     
     return () => {
@@ -29,11 +33,22 @@ const PaginaRegistro = () => {
     return idade >= 18;
   };
 
-  const handleSubmit = (e) => {
+  const validarEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validações
     if (!email) {
       alert('O campo E-mail está vazio');
+      return;
+    }
+
+    if (!validarEmail(email)) {
+      alert('Formato de e-mail inválido');
       return;
     }
     
@@ -47,13 +62,45 @@ const PaginaRegistro = () => {
       return;
     }
 
+    if (senha.length < 5) {
+      alert('A senha deve ter no mínimo 5 caracteres');
+      return;
+    }
+
     // Verificar se a pessoa é maior de 18 anos
     if (!verificarIdade(dataNascimento)) {
       alert('Você deve ter pelo menos 18 anos para se registrar');
       return;
     }
 
-    navigate('/acesso');
+    setLoading(true);
+
+    try {
+      const response = await axios.post('/registrar', {
+        email,
+        dt_nascimento: dataNascimento,
+        senha
+      });
+
+      alert(response.data.message);
+      
+      // Redirecionar para página de acesso
+      navigate('/acesso');
+    } catch (error) {
+      if (error.response) {
+        // Erro retornado pelo servidor
+        alert(error.response.data.error || 'Erro no registro');
+      } else if (error.request) {
+        // Erro de conexão
+        alert('Sem resposta do servidor. Verifique sua conexão.');
+      } else {
+        // Erro ao configurar a requisição
+        alert('Erro ao processar o registro');
+      }
+      console.error('Erro detalhado:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleMostrarSenha = () => {
@@ -139,7 +186,13 @@ const PaginaRegistro = () => {
                       </button>
                     </div>
                   </div>
-                  <button type="submit" className="br-button primary">Registrar</button>
+                  <button 
+                    type="submit" 
+                    className="br-button primary" 
+                    disabled={loading}
+                  >
+                    {loading ? 'Registrando...' : 'Registrar'}
+                  </button>
                 </form>
               </div>
             </div>

@@ -1,8 +1,38 @@
-import { useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
 
 const PaginaPrincipal = () => {
+  const [usuarios, setUsuarios] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  // Configuração base do Axios
+  useEffect(() => {
+    axios.defaults.baseURL = 'http://localhost:8000/api';
+  }, []);
+
+  // Buscar usuários
+  const buscarUsuarios = useCallback(async () => {
+    if (localStorage.getItem('usuarioLogado') !== 'true') {
+      navigate('/principal');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await axios.get('/listagem-usuarios');
+      setUsuarios(response.data);
+    } catch (err) {
+      setError('Erro ao buscar usuários');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]);
 
   const handleAcesso = useCallback(() => {
     navigate("/acesso");
@@ -16,11 +46,12 @@ const PaginaPrincipal = () => {
     localStorage.removeItem("usuarioLogado");
     
     sessionStorage.setItem("mostrarMensagemLogout", "true");
-    
+
     window.location.reload();
   }, []);
 
   useEffect(() => {
+    buscarUsuarios();
 
     if (sessionStorage.getItem("mostrarMensagemLogout") === "true") {
       sessionStorage.removeItem("mostrarMensagemLogout");
@@ -73,6 +104,18 @@ const PaginaPrincipal = () => {
       botaoEntrar.addEventListener("click", handleAcesso);
     }
 
+    const listaUsuariosElement = document.getElementById("listaUsuarios");
+    if (listaUsuariosElement) {
+      listaUsuariosElement.innerHTML = usuarios.length > 0 
+        ? usuarios.map(usuario => `
+          <tr>
+            <td>${usuario.email}</td>
+            <td>${usuario.dt_nascimento}</td>
+          </tr>
+        `).join('')
+        : '<tr><td colspan="2">Conecte para exibir o painel!</td></tr>';
+    }
+
     return () => {
       if (botaoTelaAcesso) {
         botaoTelaAcesso.removeEventListener("click", handleAcesso);
@@ -90,7 +133,21 @@ const PaginaPrincipal = () => {
         botaoEntrar.removeEventListener("click", handleAcesso);
       }
     };
-  }, [handleAcesso, handleRegistro, handleLogout]);
+  }, [
+    handleAcesso, 
+    handleRegistro, 
+    handleLogout, 
+    buscarUsuarios, 
+    usuarios
+  ]);
+
+  if (loading) {
+    return null;
+  }
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   return null;
 };
